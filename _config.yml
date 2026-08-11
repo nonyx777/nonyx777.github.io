@@ -1,0 +1,17 @@
+title: nonyx777.github.io
+email: ""
+description: "A personal blog placeholder with updates coming soon."
+url: "https://nonyx777.github.io"
+baseurl: ""
+theme: minima
+plugins:
+  - jekyll-feed
+
+markdown: kramdown
+default_lang: en
+paginate: 5
+
+# Optional social links
+social:
+  - name: GitHub
+    url: "https://github.com/nonyx777"
