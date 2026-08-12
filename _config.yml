@@ -1,17 +1,26 @@
-title: nonyx777.github.io
-email: ""
-description: "A personal blog placeholder with updates coming soon."
+title: "Nahom's Blog"
+tagline: "The blog at the corner of the internet"
+email: "nahomretebo@gmail.com"
+description: "A personal space for technical writings."
 url: "https://nonyx777.github.io"
 baseurl: ""
+
+github_username: nonyx777
+telegram_username: NahomTemesgen
+linkedin_url: "https://www.linkedin.com/in/nahomtemesgen/"
+
 theme: minima
 plugins:
   - jekyll-feed
 
 markdown: kramdown
 default_lang: en
-paginate: 5
+timezone: UTC
 
-# Optional social links
-social:
-  - name: GitHub
-    url: "https://github.com/nonyx777"
+sass:
+  style: compressed
+
+exclude:
+  - pages
+  - README.md
+  - BLOG_GUIDE.md

@@ -1,0 +1,16 @@
+---
+layout: default
+---
+
+<div class="wrapper home-content">
+  <h1 class="visually-hidden">Latest posts</h1>
+  <div class="post-list">
+    {% for post in site.posts %}
+      <article class="post-preview">
+        <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %d, %Y" }}</time>
+        <h2 class="post-preview-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+        <p class="post-excerpt">{{ post.excerpt | strip_html | normalize_whitespace }}</p>
+      </article>
+    {% endfor %}
+  </div>
+</div>

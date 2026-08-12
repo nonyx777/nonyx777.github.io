@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="{{ site.default_lang | default: 'en' }}">
+  <head>
+    {% include head.html %}
+  </head>
+  <body class="site-shell">
+    <header class="site-header">
+      <div class="wrapper header-inner">
+        <a class="site-brand" href="{{ '/' | relative_url }}">{{ site.tagline }}</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a class="nav-link{% if page.url == '/' %} is-active{% endif %}" href="{{ '/' | relative_url }}">Home</a>
+          <a class="nav-link{% if page.url == '/about/' %} is-active{% endif %}" href="{{ '/about/' | relative_url }}">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="site-main">
+      {{ content }}
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrapper footer-inner">
+        <div class="footer-column">
+          <p class="footer-title">{{ site.title }}</p>
+          <a class="footer-muted" href="mailto:{{ site.email }}">{{ site.email }}</a>
+        </div>
+
+        <div class="footer-column footer-socials">
+          <a href="https://github.com/{{ site.github_username }}" rel="me">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 .5a7.7 7.7 0 0 0-2.43 15c.38.07.52-.16.52-.36v-1.5c-2.12.46-2.57-.9-2.57-.9-.35-.88-.85-1.12-.85-1.12-.69-.47.06-.46.06-.46.76.05 1.16.78 1.16.78.68 1.16 1.78.83 2.21.63.07-.49.27-.83.48-1.02-1.69-.19-3.47-.85-3.47-3.78 0-.83.3-1.52.78-2.05-.08-.2-.34-.97.08-2.02 0 0 .64-.21 2.12.78A7.4 7.4 0 0 1 8 4.22a7.4 7.4 0 0 1 1.93.26c1.47-1 2.11-.78 2.11-.78.42 1.05.16 1.82.08 2.02.49.53.78 1.22.78 2.05 0 2.94-1.79 3.58-3.49 3.77.27.24.52.7.52 1.42v2.18c0 .2.14.43.52.36A7.7 7.7 0 0 0 8 .5Z"/></svg>
+            <span>Github</span>
+          </a>
+          <a href="https://t.me/{{ site.telegram_username }}" rel="me">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M23.91 3.79 20.3 20.84c-.27 1.2-.98 1.49-1.99.93l-5.5-4.05-2.65 2.55c-.29.29-.54.54-1.1.54l.39-5.59 10.18-9.2c.44-.39-.1-.6-.69-.22L6.36 13.73.94 12.04c-1.18-.37-1.2-1.18.25-1.75L22.4 2.11c.98-.36 1.83.24 1.51 1.68Z"/></svg>
+            <span>Telegram</span>
+          </a>
+          <a href="{{ site.linkedin_url }}" rel="me">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V8.98h3.42v1.57h.05c.48-.9 1.64-1.85 3.37-1.85 3.61 0 4.27 2.37 4.27 5.46v6.29ZM5.32 7.41a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.1 20.45H3.54V8.98H7.1v11.47ZM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.73V1.73C24 .77 23.21 0 22.23 0Z"/></svg>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+
+        <p class="footer-description">{{ site.description }}</p>
+      </div>
+    </footer>
+  </body>
+</html>

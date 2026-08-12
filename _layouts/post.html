@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="{{ site.default_lang | default: 'en' }}">
+  <head>
+    {% include head.html %}
+  </head>
+  <body class="post-shell">
+    <main class="wrapper post-main">
+      <article>
+        <header class="post-header">
+          <h1 class="post-title">{{ page.title }}</h1>
+          <time class="post-date" datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %d, %Y" }}</time>
+        </header>
+        <div class="post-content">
+          {{ content }}
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
