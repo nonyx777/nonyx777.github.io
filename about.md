@@ -1,11 +1,10 @@
 ---
 layout: page
-title: "About"
+title: "About Me"
 permalink: /about/
 ---
 
-Hello, I am a systems engineer interested in web architectures, lightweight compiler design, and building zero-dependency server tooling. I write code during the day and write reflections on optimization during the night.
-
-This blog is intentionally designed to be as minimal as possible. There are no tracking scripts, zero cookie consent dialogs, no advertisements, and absolutely no external styling frameworks. It runs on Jekyll’s standard Minima layout, compiled with GitHub Actions, and served instantly via GitHub Pages.
-
-If you want to talk about low-level browser optimizations, network protocols, or just want to exchange reading lists, please reach out via GitHub or send an email.
+Hello my name is Nahom Temesgen, I'm a software engineer interested in computer graphics and physics simulations,
+and recently reinforcement learning.     
+I'm currently a technical artist at an animation studio. I spend most of my time trying to replicate things in video
+games that caught my attention, or reading about it in order to replicate it.
