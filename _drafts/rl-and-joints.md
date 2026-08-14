@@ -25,13 +25,19 @@ those stored numerical representations of experiences get adjusted as the agent 
 Initially every action has the same probability of being picked, but in time as the policy gets better that changes.    
 
 ### Joints in Godot
-Currently as of this date godot supports 5 3d joints, for the CartPole environment we only need two, namely hinge joint and slider joint.
+Currently as of this date godot supports 5 3d joints. For the CartPole environment we only need two, namely hinge joint and slider joint.
 Even though I chose to make it in 3d, their movement is still constrained to two dimensions. Meaning the slider joint constraints the cart to only move sideways for a limited distance, while the hinge joint constraints the pole to rotate around the z-axis making it a 2 dimensional rotation. 
 Since both the cart and pole are rigidbodies and connected with the hinge joint, movement of the pole results in movement of the cart, so to
-stabalize the cart whenever the pole moves, I adjusted their mass. One thing that's enabled by default in rigidbodies is sleep. When
+stabalize the cart whenever the pole moves, I adjusted their mass. One other thing to look out for is sleep being enabled by default. When
 movement is very subtle in order to save compute resource the physics engine halts the rigidbody, that should be disabled.  
 ### CartPole rl environment
-My implementation of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar.
-#### The joints I used
-#### The algorithm I used to train the agent
-#### The result
+My implementation of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
+Previously I have mentioned MDP (Markov's Decision Process), and MDP needs state, action, and reward specified explicitly. Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.     
+
+Action = 2 numbers [ 0 and 1] [left and right]  
+State = 4 numbers [ cart's x position, cart's x velocity, pole's angle with respect to y-axis, pole's angular velocity]     
+Reward = 1 number [ +1 or -1]   
+
+There is a difference between the reward system between my implementation and the theirs. On the paper the agent learns by choosing the action that will result in the highest future reward. So the agents is always positively rewarded even at failure, however it's followed by epsiode termination. This means if it had chosen a better action it could have had recieved more rewards, so the next time it will choose an action which brings more rewards. That is the logic behind their reward system.   
+My agent failed to learn with that reward system. I don't know why, but it might be important to know that I'm using a different algorithm to that of the paper's. I'm using what's known as Policy Proximal Optimization (PPO).    
+As a result after tweaking the reward system to punish the failure by giving a negative reward, it started to learn.    
