@@ -377,3 +377,27 @@ a {
     font-size: clamp(30px, 9vw, 38px);
   }
 }
+
+.post-content pre {
+  margin: 24px 0;
+  padding: 4px;
+  overflow-x: auto;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  background: #f5f5f5;
+  border-radius: 6px;
+}
+
+.post-content pre code {
+  font: inherit;
+  color: inherit;
+}
+
+.post-content img.image-center {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-right: auto;
+  margin-left: auto;
+}
