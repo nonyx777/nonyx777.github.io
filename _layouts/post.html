@@ -2,6 +2,18 @@
 <html lang="{{ site.default_lang | default: 'en' }}">
   <head>
     {% include head.html %}
+    <!-- MathJax Configuration & Script -->
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        }
+      };
+    </script>
   </head>
   <body class="post-shell">
     <main class="wrapper post-main">
