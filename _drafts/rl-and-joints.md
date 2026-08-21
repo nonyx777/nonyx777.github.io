@@ -8,10 +8,10 @@ date: 2026-08-13 09:00:00 +0000
 
 Recently I have been reading about reinforcement learning at my leisure time. I don't particularly remember the point I got
 interested, but somehow I ended up writing a blog about it, or around it to be precise. This blog is not specifically about rl,
-even though it's the center of it, this blog is an implementation of rl environments, namely CartPole and Pendulum inside godot.
+even though it's the center of it, this blog is an implementation of rl environments, namely the CartPole rl problem inside godot. This blog will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole.	
 It's more suitable to say this blog covers the general process of training an agent inside godot. Why godot? you may ask,
 because I like it, and after discovering a plugin called godot-rl-agents which let's you use state of the art 
-python libraries such as stablebaseline3, I was reassured that it was the right decision to make.
+python libraries such as stablebaseline3, I was reassured that it was the right decision to make.	
 ### High-level introduction to rl
 Reinforcement learning as you certainy have heard before, is all about rewarding and punishing the agent based on its interaction
 with its environment. Almost all current rl algorithms are based on something called Markov's decision process (MDP). MDP is a mathematical framework for sequential decision making under uncertainty. It uses a single digit as a reward signal and the future state depends only on
@@ -29,10 +29,10 @@ Currently godot supports five 3D joints. For the CartPole environment we only ne
 Even though I chose to make it in 3D, their movement is still constrained to two dimensions. Meaning the slider joint constraints the cart to only move sideways for a limited distance, while the hinge joint constraints the pole to rotate around the z-axis making it a 2 dimensional rotation. 
 Since both the cart and pole are rigidbodies and connected through the hinge joint, movement of the pole results in movement of the cart, so to stabalize the cart whenever the pole moves, I adjusted their mass. One other thing to look out for is sleep being enabled by default. When
 movement is very subtle in order to save compute resource the physics engine completely stops the rigidbody, that should be disabled.  
-![Slider and Hinge joints]({{ '/assets/images/rl-and-joints/joint-config.gif'}}){: width="80%" .image-center }
+![Slider and Hinge joints]({{ '/assets/images/rl-and-joints/joint-config.gif'}}){: width="%" .image-center }	
 
-### CartPole rl environment
-My implementation of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
+### 1st flavor cartpole rl problem
+My implementation of this version of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
 Previously I have mentioned MDP (Markov's Decision Process), and MDP needs state, action, and reward specified explicitly. Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.     
 
 Action = 2 numbers [ 0 and 1] [left and right]  
@@ -71,8 +71,21 @@ As a result after tweaking the reward system to punish the failure by giving a n
 
 I used multi-agent training instead of training with one environment instance. Training multiple agents at once helps in diversifying training data, stability, and reducing the wall-clock time of the training.  
 
-![cp agent training]({{ '/assets/images/rl-and-joints/cp-agent-training.gif'}}){: width="80%" .image-center }
+![cp agent training]({{ '/assets/images/rl-and-joints/cp-agent-training.gif'}}){: width="%" .image-center } 	
 
 A suprising thing I noticed is that the agent can learn even when your reward system is slightly off. For instance I had accidentally made it so that it punishes the agent everytime it survived to perform a certain number of actions. Now it is indeed not significant compared to the number of rewards it gets before that, however since the number sqeezed out of the neural network satisfies the evaluation, it learns.  
 
-![cp agent trained]({{ '/assets/images/rl-and-joints/cp-trained-agent.gif'}}){: width="80%" .image-center }
+![cp agent trained]({{ '/assets/images/rl-and-joints/cp-trained-agent.gif'}}){: width="%" .image-center } 	
+
+### 2nd flavor cartpole rl problem
+This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and how the parameters affected it. It also has a good introduction of rl with descriptions and explanations, making it a good introductory material as well.  
+The episode termination conditions are as follows:
+1. Cart passing the specified distance from the center. The agent recieves a massive -400 reward deduction.
+2. Pole rotating more than 14 rad/sec.
+3. Episode is 800 timesteps long.	
+
+The reward system uses a normalized return value. Meaning the summation of the rewards for a single episode is divided by 800(the specified episode length). The agent is doing great when the return value is close to 1.
+This is the reward function used in the article  
+$r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
+The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem.  
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited -- it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component.
