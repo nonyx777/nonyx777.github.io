@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "RL and Joints"
+title: "Training RL agents in Godot"
 excerpt: "This blog is not specifically about rl, even though it's the center of it, this blog is an implementation of an rl environment called CartPole inside godot. It's more suitable to say this blog covers the general process of training an agent inside godot."
 date: 2026-08-13 09:00:00 +0000
 ---
@@ -31,7 +31,7 @@ Since both the cart and pole are rigidbodies and connected through the hinge joi
 movement is very subtle in order to save compute resource the physics engine completely stops the rigidbody, that should be disabled.  
 ![Slider and Hinge joints]({{ '/assets/images/rl-and-joints/joint-config.gif'}}){: width="%" .image-center }	
 
-### 1st flavor cartpole rl problem
+### Balancing an upright pole
 My implementation of this version of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
 Previously I have mentioned MDP (Markov's Decision Process), and MDP needs state, action, and reward specified explicitly. Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.     
 
@@ -77,15 +77,18 @@ A suprising thing I noticed is that the agent can learn even when your reward sy
 
 ![cp agent trained]({{ '/assets/images/rl-and-joints/cp-trained-agent.gif'}}){: width="%" .image-center } 	
 
-### 2nd flavor cartpole rl problem
-This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and how the parameters affected it. It also has a good introduction of rl with descriptions and explanations, making it a good introductory material as well.  
+### Swing up and balance
+This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and how the parameters affected it. It also has a good introduction to rl with descriptions and explanations, making it a good introductory material as well.  
 The episode termination conditions are as follows:
 1. Cart passing the specified distance from the center. The agent recieves a massive -400 reward deduction.
-2. Pole rotating more than 14 rad/sec.
+2. Pole rotating more than 200 rad/sec.
 3. Episode is 800 timesteps long.	
 
 The reward system uses a normalized return value. Meaning the summation of the rewards for a single episode is divided by 800(the specified episode length). The agent is doing great when the return value is close to 1.
 This is the reward function used in the article  
 $r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
-The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem.  
-In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited -- it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component.
+The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem. The problem is considered solved if the average return of 100 consecutive episodes is greater than 0.85.  
+
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.  
+
+Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different softwares are set up, hence it may result in waste of training compute and time.
