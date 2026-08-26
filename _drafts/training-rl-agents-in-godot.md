@@ -46,27 +46,28 @@ My agent failed to learn with that reward system. I don't know why, but it might
 As a result after tweaking the reward system to punish the failure by giving a negative reward, it started to learn.   
 
 ```{python}
-	var pole_angle: float = ai_controller.pole_angle
-	var cart_pos_x: float = ai_controller.cart_pos_x
-	
-	var pole_failed: bool = abs(pole_angle) > MAX_POLE_ANGLE
-	var cart_failed: bool = abs(cart_pos_x) > MAX_CART_DIST
-	var time_limit: bool = ai_controller.n_steps >= MAX_NUM_STEPS
-	
-	
-	if pole_failed or cart_failed:
-		ai_controller.reward = -1.0
-	else:
-		ai_controller.reward = 1.0
-	
-	current_episode_return += ai_controller.reward
-	
-	if pole_failed or cart_failed or time_limit:
-		check_if_solved()
-		ai_controller.reset()
-		reset_values()
-		return true
-	return false
+	func termination_conditions() -> bool:
+		var pole_angle: float = ai_controller.pole_angle
+		var cart_pos_x: float = ai_controller.cart_pos_x
+		
+		var pole_failed: bool = abs(pole_angle) > MAX_POLE_ANGLE
+		var cart_failed: bool = abs(cart_pos_x) > MAX_CART_DIST
+		var time_limit: bool = ai_controller.n_steps >= MAX_NUM_STEPS
+		
+		
+		if pole_failed or cart_failed:
+			ai_controller.reward = -1.0
+		else:
+			ai_controller.reward = 1.0
+		
+		current_episode_return += ai_controller.reward
+		
+		if pole_failed or cart_failed or time_limit:
+			check_if_solved()
+			ai_controller.reset()
+			reset_values()
+			return true
+		return false
 ```
 
 I used multi-agent training instead of training with one environment instance. Training multiple agents at once helps in diversifying training data, stability, and reducing the wall-clock time of the training.  
@@ -80,7 +81,7 @@ A suprising thing I noticed is that the agent can learn even when your reward sy
 ### Swing up and balance
 This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and how the parameters affected it. It also has a good introduction to rl with descriptions and explanations, making it a good introductory material as well.  
 The episode termination conditions are as follows:
-1. Cart passing the specified distance from the center. The agent recieves a massive -400 reward deduction.
+1. Cart moving beyond the specified distance from the center. The agent recieves a massive -400 reward deduction.
 2. Pole rotating more than 200 rad/sec.
 3. Episode is 800 timesteps long.	
 
@@ -89,6 +90,39 @@ This is the reward function used in the article
 $r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
 The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem. The problem is considered solved if the average return of 100 consecutive episodes is greater than 0.85.  
 
-In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.  
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
+```{python}
+	func reward_func(angle: float, pos_x: float) -> float:
+		var n: float = 0.5 * (1.0 - cos(angle))
+		var d: float = pow(pos_x / MAX_CART_DIST, 2.0)
+		return n - d
+	
+	func termination_conditions() -> bool:
+		var pole_angular_velocity: float = ai_controller.pole_angular_velocity
+		var cart_pos_x: float = ai_controller.cart_pos_x
+		var pole_angle: float = ai_controller.pole_angle
+		
+		var pole_failed: bool = abs(pole_angular_velocity) > MAX_POLE_ANGULAR_VELOCITY
+		var cart_failed: bool = abs(cart_pos_x) > MAX_CART_DIST
+		var time_limit: bool = ai_controller.n_steps >= MAX_NUM_STEPS
+		
+		
+		if cart_failed:
+			ai_controller.reward = -400
+		else:
+			ai_controller.reward = reward_func(pole_angle, cart_pos_x)
+		
+		current_episode_return += ai_controller.reward
+		
+		if pole_failed or cart_failed or time_limit:
+			current_episode_return /= MAX_NUM_STEPS
+			check_if_solved()
+			ai_controller.reset()
+			reset_values()
+			return true
+		return false
+```
+Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different platforms are set up, hence it may result in waste of training compute and time.  
+As you can imagine this took more time to train than the prior, it took a total of more than half a million timesteps for the agent to be able to swing up and balance the pole.
 
-Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different softwares are set up, hence it may result in waste of training compute and time.
+### How the godot-rl-agents plugin work
