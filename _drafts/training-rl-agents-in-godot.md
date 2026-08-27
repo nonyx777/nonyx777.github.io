@@ -6,7 +6,7 @@ date: 2026-08-13 09:00:00 +0000
 ---
 
 
-Recently I have been reading about reinforcement learning at my leisure time. I don't particularly remember the point I got
+Recently I have been reading about reinforcement learning at my spare time. I don't particularly remember the point I got
 interested, but somehow I ended up writing a blog about it, or around it to be precise. This blog is not specifically about rl,
 even though it's the center of it, this blog is an implementation of rl environments, namely the CartPole rl problem inside godot. This blog will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole.	
 It's more suitable to say this blog covers the general process of training an agent inside godot. Why godot? you may ask,
@@ -15,7 +15,7 @@ python libraries such as stablebaseline3, I was reassured that it was the right 
 ### High-level introduction to rl
 Reinforcement learning as you certainy have heard before, is all about rewarding and punishing the agent based on its interaction
 with its environment. Almost all current rl algorithms are based on something called Markov's decision process (MDP). MDP is a mathematical framework for sequential decision making under uncertainty. It uses a single digit as a reward signal and the future state depends only on
-the current state and action. Those two things are the main reasons behind why MDP falls short at framing a complicated problem.    
+the current state and action. Those two things are the main reasons behind why MDP falls short at framing complicated problems.    
 One of the components of MDP is known as policy, it's concerned with choosing an action in a given state which maximizes reward, specifically
 the cumulative future reward. The cumulative future reward is known as return. Which makes the ultimate goal
 of MDP to find a policy that maximizes return.  
@@ -33,11 +33,13 @@ movement is very subtle in order to save compute resource the physics engine com
 
 ### Balancing an upright pole
 My implementation of this version of the cartpole rl environment is based on the paper Balancing a CartPole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
-Previously I have mentioned MDP (Markov's Decision Process), and MDP needs state, action, and reward specified explicitly. Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.     
+Previously I have mentioned MDP (Markov's Decision Process), and MDP needs state, action, and reward specified explicitly.      
 
-Action = 2 numbers [ 0 and 1] [left and right]  
-State = 4 numbers [ cart's x position, cart's x velocity, pole's angle with respect to y-axis, pole's angular velocity]     
-Reward = 1 number [ +1 or -1]   
+Action = 2 numbers [ $0$ and $1$] [left and right]  
+State = 4 numbers [ $x$, $\dot{x}$, $\theta$, $\dot{\theta}$]     
+Reward = 1 number [ $+1$ or $-1$]   
+
+Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.  
 
 The episode termination conditions are as follows. If the angle of the pole aginst the vertical axis is greater than 30 degrees, if the cart is at a distance greater than 1 unit from the center, and finally if the episode is 500 actions long. The problem is considered solved when the average reward of the last 100 consecutive episodes is equal or greater than 195.
 
@@ -74,23 +76,22 @@ I used multi-agent training instead of training with one environment instance. T
 
 ![cp agent training]({{ '/assets/images/rl-and-joints/cp-agent-training.gif'}}){: width="%" .image-center } 	
 
-A suprising thing I noticed is that the agent can learn even when your reward system is slightly off. For instance I had accidentally made it so that it punishes the agent everytime it survived to perform a certain number of actions. Now it is indeed not significant compared to the number of rewards it gets before that, however since the number sqeezed out of the neural network satisfies the evaluation, it learns.  
+A suprising thing I noticed is that the agent can learn even when your reward system is slightly off. For instance I had accidentally made it so that it punishes the agent everytime it survived to perform a certain number of actions. Now, it is indeed not significant compared to the number of rewards it gets before that, however since the number sqeezed out of the neural network satisfies the evaluation, it learns.  
 
 ![cp agent trained]({{ '/assets/images/rl-and-joints/cp-trained-agent.gif'}}){: width="%" .image-center } 	
 
 ### Swing up and balance
-This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and how the parameters affected it. It also has a good introduction to rl with descriptions and explanations, making it a good introductory material as well.  
+This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. In general it talks about the timestep it took for the algorithms to learn, and the role of the parameters in it. It also has a good introduction to rl with descriptions and explanations, making it a good introductory material as well.  
 The episode termination conditions are as follows:
 1. Cart moving beyond the specified distance from the center. The agent recieves a massive -400 reward deduction.
 2. Pole rotating more than 200 rad/sec.
 3. Episode is 800 timesteps long.	
 
-The reward system uses a normalized return value. Meaning the summation of the rewards for a single episode is divided by 800(the specified episode length). The agent is doing great when the return value is close to 1.
-This is the reward function used in the article  
-$r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
+The reward system uses a normalized return value. Meaning the summation of the rewards for a single episode is divided by the specified episode length. The agent is doing great when the return value is close to 1.
+This is the reward function used in the article $r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
 The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem. The problem is considered solved if the average return of 100 consecutive episodes is greater than 0.85.  
 
-In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was +/- 30 with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was $+/-30$ degrees with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
 ```{python}
 	func reward_func(angle: float, pos_x: float) -> float:
 		var n: float = 0.5 * (1.0 - cos(angle))
@@ -125,4 +126,6 @@ In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. 
 Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different platforms are set up, hence it may result in waste of training compute and time.  
 As you can imagine this took more time to train than the prior, it took a total of more than half a million timesteps for the agent to be able to swing up and balance the pole.
 
-### How the godot-rl-agents plugin work
+### What is the Godot Reinforement Learning Agents library
+The godot-rl-agents library serves as an interface between python rl libraries and the godot engine. It serves as a wrapper for various python rl frameworks which let's you train agents with state of the art rl algorithms. From the provided rl frameworks the most notable ones are RLlib and Stablebaseline3. It uses TCP connection with client-server architecture, which also makes it possible to train on distributed systems. Godot-rl-agents is versatile and flexible in terms of it's ability to allow users create environments with continuous, discrete, and mixed action spaces, along with the many other framework and algorithm options it provides. It adheres to the standard Gym interface which was introduced by OpenAI.  
+For further inquiry about godot-rl-agents library you can read their workshop paper as well as their documentation on HuggingFace. This is the defacto youtube video that will help you setup the library.
