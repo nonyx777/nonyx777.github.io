@@ -128,4 +128,21 @@ As you can imagine this took more time to train than the prior, it took a total 
 
 ### What is the Godot Reinforement Learning Agents library
 The godot-rl-agents library serves as an interface between python rl libraries and the godot engine. It serves as a wrapper for various python rl frameworks which let's you train agents with state of the art rl algorithms. From the provided rl frameworks the most notable ones are RLlib and Stablebaseline3. It uses TCP connection with client-server architecture, which also makes it possible to train on distributed systems. Godot-rl-agents is versatile and flexible in terms of it's ability to allow users create environments with continuous, discrete, and mixed action spaces, along with the many other framework and algorithm options it provides. It adheres to the standard Gym interface which was introduced by OpenAI.  
-For further inquiry about godot-rl-agents library you can read their workshop paper as well as their documentation on HuggingFace. This is the defacto youtube video that will help you setup the library.
+Following the Gym interface means it uses functions step(action), reset(), close(), and render() as a means of communcation between the agent and environment. In this case, initially godot calls the reset function which reverts everything to its original state returning the first observation. After that we enter the training loop -- the python side sends what action the agent should perform, from godot's side after the agent performs that action the function returns information such as observation (state), reward, termination, and other auxiliary informations. reset() is called at the end of every episode. This process continues until a termination of any kind.  
+For further inquiry about godot-rl-agents library you can read their workshop [paper][godot-paper] as well as their documentation on [HuggingFace][hugging-face]. This is the defacto youtube [video][defacto-video] that will help you setup the library.  
+
+### Conclusion
+To summarize here are the things covered in this blog post. Started with a very short and high level introduction to rl, then proceeded with the type of joints used to build the cart-pole environment. Finally, I covered the two flavors of the cart-pole rl problem, balancing the pole from an already upright state and swinging up to balance the pole. The algorithms, actions, states, and reward systems have been covered and explained, along with the materials I used to implement the solutions.  
+This has been my gateway exercise into reinforcement learning. I have found rl to be very rewarding. There are numerous platforms and libraries that helps you make the journey much simpler, such as the one I used (godot-rl-agents). They help you focus on training instead of setting up an environment, which lowers the amount of knowledge to start training an agent. With that said understanding the fundementals is necessary to easily navigate around different resources and materials. To help you with that, here are some resource I have found to be useful.
+- [Reinforcement Learning for LLMs: The Complete Guide][llm-rl]
+- [Gonkee's introduction to RL][gonkee]
+- [Antonnin Raffin's blog posts][antonnin-raffin]
+- Grokking reinforcement learning book
+
+
+[godot-paper]: https://arxiv.org/abs/2112.03636
+[hugging-face]: https://huggingface.co/learn/deep-rl-course/en/unitbonus3/godotrl
+[defacto-video]: https://youtu.be/f8arMv_rtUU?si=buZJBMbfi64UPyUm
+[llm-rl]: https://cameronrwolfe.substack.com/p/llm-rl
+[gonkee]: https://youtu.be/VnpRp7ZglfA?si=clLbrIy9Mtm-2LMh
+[antonnin-raffin]: https://araffin.github.io/post/rl102/
