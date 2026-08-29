@@ -41,7 +41,7 @@ Reward = 1 number [ $+1$ or $-1$]
 
 Keep in mind that different resources might use state interchangably to refer to the observable part or both the unobserved and observed. In my case state will always refer to the observable part.  
 
-The episode termination conditions are as follows. If the angle of the pole aginst the vertical axis is greater than 30 degrees, if the cart is at a distance greater than 1 unit from the center, and finally if the episode is 500 actions long. The problem is considered solved when the average reward of the last 100 consecutive episodes is equal or greater than 195.
+The episode termination conditions are as follows. If the angle of the pole aginst the vertical axis is greater than 30°, if the cart is at a distance greater than 1 unit from the center, and finally if the episode is 500 actions long. The problem is considered solved when the average reward of the last 100 consecutive episodes is equal or greater than 195.
 
 There is a difference between the reward system between my implementation and the theirs. On the paper the agent learns by choosing the action that will result in the highest future reward. So the agent is always positively rewarded even at failure, however it's followed by epsiode termination. This means if it had chosen a better action it could have had recieved more rewards, so the next time it will choose an action which brings more rewards. That is the logic behind their reward system.   
 My agent failed to learn with that reward system. I don't know why, but it might be important to know that I'm using a different algorithm to that of the paper's. I'm using what's known as Policy Proximal Optimization (PPO).    
@@ -91,7 +91,7 @@ The reward system uses a normalized return value. Meaning the summation of the r
 This is the reward function used in the article $r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
 The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem. The problem is considered solved if the average return of 100 consecutive episodes is greater than 0.85.  
 
-In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was $+/-30$ degrees with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was $+/-$30° with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
 ```{python}
 	func reward_func(angle: float, pos_x: float) -> float:
 		var n: float = 0.5 * (1.0 - cos(angle))
