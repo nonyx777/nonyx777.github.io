@@ -1,14 +1,14 @@
 ---
 layout: post
 title: "Training RL agents in Godot"
-excerpt: "This blog post is not specifically about rl, even though it's the center of it, it is an implementation of rl environments, namely the cartpole problem inside godot. It will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole."
-date: 2026-08-13 09:00:00 +0000
+excerpt: "This blog post is not specifically about rl, even though it's the center of it, it is an implementation of the cartpole rl problem inside godot. It will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole."
+date: 2026-08-31
 ---
 
 
 Recently I have been reading about reinforcement learning at my spare time. I don't particularly remember the exact reason I got
 interested, but somehow I ended up writing a blog about it, or around it to be precise. This blog post is not specifically about rl,
-even though it's the center of it, it is an implementation of rl environments, namely the cartpole problem inside godot. It will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole.	
+even though it's the center of it, it is an implementation of the cartpole rl problem inside godot. It will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole.	
 It's more suitable to say it covers the general process of training an agent inside godot. Why godot? you may ask,
 because I like it, and after discovering a plugin called godot-rl-agents which let's you use state of the art 
 python libraries such as stablebaseline3, I was reassured that it was the right decision to make.	
