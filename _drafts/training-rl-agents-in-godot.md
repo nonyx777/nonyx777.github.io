@@ -6,15 +6,15 @@ date: 2026-08-13 09:00:00 +0000
 ---
 
 
-Recently I have been reading about reinforcement learning at my spare time. I don't particularly remember the point I got
+Recently I have been reading about reinforcement learning at my spare time. I don't particularly remember the exact reason I got
 interested, but somehow I ended up writing a blog about it, or around it to be precise. This blog post is not specifically about rl,
 even though it's the center of it, it is an implementation of rl environments, namely the cartpole problem inside godot. It will cover the two flavors of the problem, one where the agent learns to balance it from an unstable position where the pole initially starts from an upright orientation, and the other where the agent learns to swing up to balance the pole.	
 It's more suitable to say it covers the general process of training an agent inside godot. Why godot? you may ask,
 because I like it, and after discovering a plugin called godot-rl-agents which let's you use state of the art 
 python libraries such as stablebaseline3, I was reassured that it was the right decision to make.	
 ### High-level introduction to rl
-Reinforcement learning as you certainy have heard before, is all about rewarding and punishing the agent based on its interaction
-with its environment. Almost all current rl algorithms are based on something called Markov's decision process (MDP). MDP is a mathematical framework for sequential decision making under uncertainty. It uses a single digit as a reward signal and the future state depends only on the current state and action. Those two things are the main reasons behind why MDP falls short at framing complicated problems.    
+Reinforcement learning as you certainy have heard before, is about rewarding and punishing the agent based on its interaction
+with its environment. Almost all current rl algorithms are based on something called Markov's decision process (MDP). MDP is a mathematical framework for sequential decision making under uncertainty. It uses a number as a reward signal and the future state depends only on the current state and action. Those two things are the main reasons behind why MDP falls short at framing complicated problems.    
 One of the components of MDP is known as policy, it's concerned with choosing an action in a given state which maximizes reward, specifically the cumulative future reward. The cumulative future reward is known as return. Which makes the ultimate goal of MDP to find a policy that maximizes return.  
 RL is categorized into two, model-free and model-based. I currently only have knowledge of model-free algorithms and that is what's going to be discussed. Model-free rl algorithms build a model of the enviornment by trial and error, the experiences gained are stored inside a table for tabular based algorithms such as Q-learning, or in a form of weights for those based on deep neural networks such as DQN. As you have guessed, those stored numerical representation of experiences get adjusted as the agent learns. 
 Initially every action has the same probability of being picked, but in time as the policy gets better that changes.    
@@ -84,9 +84,8 @@ The episode termination conditions are as follows:
 
 The reward system uses a normalized return value. Meaning the summation of the rewards for a single episode is divided by the specified episode length. The agent is doing great when the return value is close to 1.
 This is the reward function used in the article $r(\theta,x) = (1/2)(1-\cos(\theta))-(x/x_0)^2$  
-The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem. The problem is considered solved if the average return of 100 consecutive episodes is greater than 0.9.  
-
-In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was $+/-$30° with respect to the y-axis. In this one the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
+The function equals 1 when $\theta = \pi$ and $x = 0$. $\theta$ is relative to -y-axis unlike the first version of the problem.  
+In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. Now we're using $(\sin(\theta), \cos(\theta), \dot{\theta}, x, \dot{x})$. This is because in the first version the angle range was limited, it was $+/-$30° with respect to the y-axis. But here the pole can rotate freely, so since angles have a behavior of wrapping around, we can't use the raw angle as state component. Using $\sin$ and $cos$ instead, gives us the correct and unambiguous input for our training.
 ```{python}
 	func reward_func(angle: float, pos_x: float) -> float:
 		var n: float = 0.5 * (1.0 - cos(angle))
@@ -111,28 +110,29 @@ In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. 
 		current_episode_return += ai_controller.reward
 		
 		if pole_failed or cart_failed or time_limit:
-			current_episode_return /= MAX_NUM_STEPS
-			check_if_solved()
 			ai_controller.reset()
 			reset_values()
 			return true
 		return false
 ```
+![swing-up cp agent trained]({{ '/assets/images/rl-and-joints/swing-up cartpole.gif'}}){: width="%" .image-center }  
 Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different platforms are set up, hence it may result in waste of training compute and time.  
 As you can imagine this took more time to train than the prior, it took a total of more than half a million timesteps for the agent to be able to swing up and balance the pole.
 
 ### What is the Godot Reinforement Learning Agents library
 The godot-rl-agents library serves as an interface between python rl libraries and the godot engine. It serves as a wrapper for various python rl frameworks which let's you train agents with state of the art rl algorithms. From the provided rl frameworks the most notable ones are RLlib and Stablebaseline3. It uses TCP connection with client-server architecture, which also makes it possible to train on distributed systems. Godot-rl-agents is versatile and flexible in terms of it's ability to allow users create environments with continuous, discrete, and mixed action spaces, along with the many other framework and algorithm options it provides. It adheres to the standard Gym interface which was introduced by OpenAI.  
-Following the Gym interface means it uses functions step(action), reset(), close(), and render() as a means of communcation between the agent and environment. In this case, initially godot calls the reset function which reverts everything to its original state returning the first observation. After that we enter the training loop -- the python side sends what action the agent should perform, from godot's side after the agent performs that action the function returns information such as observation (state), reward, termination, and other auxiliary informations. reset() is called at the end of every episode. This process continues until a termination of any kind.  
+Following the Gym interface means it uses functions step(action), reset(), close(), and render() as a means of communcation between the agent and environment. In this case, initially godot calls the reset function which reverts everything to its original state returning the first observation. After that we enter the training loop -- the python side sends what action the agent should perform, from godot's side after the agent performs that action the function returns information such as observation (state), reward, termination, and other auxiliary information. reset() is called at the end of every episode. This process continues until a termination of any kind.  
 For further inquiry about godot-rl-agents library you can read their workshop [paper][godot-paper] as well as their documentation on [HuggingFace][hugging-face]. This is the defacto youtube [video][defacto-video] that will help you setup the library.  
 
 ### Conclusion
-To summarize here are the things that were covered. Started with a very short and high level introduction to rl, then proceeded with the type of joints used to build the cart-pole environment. Finally, I covered the two flavors of the cart-pole rl problem, balancing the pole from an already upright state and swinging up to balance the pole. The algorithms, actions, states, and reward systems have been covered and explained, along with the materials I used to implement the solutions.  
+To summarize here are the things that were covered. Started with a very short and high level introduction to rl, then proceeded with the type of joints used to build the cartpole environment. Finally, I covered the two flavors of the cartpole rl problem, balancing the pole from an already upright state and swinging up to balance the pole. The algorithms, actions, states, and reward systems have been covered and explained, along with the materials I used to implement the solutions.  
 This has been my gateway exercise into reinforcement learning. I have found rl to be very rewarding. There are numerous platforms and libraries that helps you make the journey much simpler, such as the one I used (godot-rl-agents). They help you focus on training instead of setting up an environment, which lowers the amount of knowledge to start training an agent. With that said understanding the fundementals is necessary to easily navigate around different resources and materials. To help you with that, here are some resource I have found to be useful.
 - [Reinforcement Learning for LLMs: The Complete Guide][llm-rl]
 - [Gonkee's introduction to RL][gonkee]
 - [Antonnin Raffin's blog posts][antonnin-raffin]
 - Grokking reinforcement learning book
+
+[project repo][github-repo]
 
 
 [godot-paper]: https://arxiv.org/abs/2112.03636
@@ -141,3 +141,4 @@ This has been my gateway exercise into reinforcement learning. I have found rl t
 [llm-rl]: https://cameronrwolfe.substack.com/p/llm-rl
 [gonkee]: https://youtu.be/VnpRp7ZglfA?si=clLbrIy9Mtm-2LMh
 [antonnin-raffin]: https://araffin.github.io/post/rl102/
+[github-repo]: https://github.com/nonyx777/RL-Projects.git
