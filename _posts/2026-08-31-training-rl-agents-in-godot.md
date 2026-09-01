@@ -110,6 +110,9 @@ In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. 
 		current_episode_return += ai_controller.reward
 		
 		if pole_failed or cart_failed or time_limit:
+			current_episode_return /= MAX_NUM_STEPS
+			ai_controller.reward = current_episode_return
+			check_if_solved()
 			ai_controller.reset()
 			reset_values()
 			return true
