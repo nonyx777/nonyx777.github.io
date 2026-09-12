@@ -24,7 +24,7 @@ Currently godot supports five 3D joints. For the cartpole environment we only ne
 Even though I chose to make it in 3D, their movement is still constrained to two dimensions. Meaning the slider joint constraints the cart to only move sideways for a limited distance, while the hinge joint constraints the pole to rotate around the z-axis making it a 2 dimensional rotation. 
 Since both the cart and pole are rigidbodies and connected through the hinge joint, movement of the pole results in movement of the cart, so to stabalize the cart whenever the pole moves, I adjusted their mass. One other thing to look out for is sleep being enabled by default. When
 movement is very subtle in order to save compute resource the physics engine completely stops the rigidbody, that should be disabled.  
-![Slider and Hinge joints]({{ '/assets/images/rl-and-joints/joint-config.gif'}}){: width="%" .image-center }	
+![Slider and Hinge joints]({{ '/assets/images/training-rl-agents-in-godot/joint-config.gif'}}){: width="%" .image-center }	
 
 ### Balancing an upright pole
 My implementation of this version of the cartpole environment is based on the paper Balancing a cartpole System with Reinforcement Learning by Swagat Kumar. This paper demonstrates how different kinds of rl algorithms affect the learning performance of the cartpole problem. They finally settled with DQN(Deep Q Network) with PER(Prioritized Experience Replay), stating the possibility of the problem being too simple for the more advanced algorithms, and the addition of PER to DQN had a significant positive impact on the learning performance.    
@@ -69,11 +69,11 @@ As a result after tweaking the reward system to punish the failure by giving a n
 
 I used multi-agent training instead of training with one environment instance. Training multiple agents at once helps in diversifying training data, stability, and reducing the wall-clock time of the training.  
 
-![cp agent training]({{ '/assets/images/rl-and-joints/cp-agent-training.gif'}}){: width="%" .image-center } 	
+![cp agent training]({{ '/assets/images/training-rl-agents-in-godot/cp-agent-training.gif'}}){: width="%" .image-center } 	
 
 A suprising thing I noticed is that the agent can learn even when your reward system is slightly off. For instance I had accidentally made it so that it punishes the agent everytime it survived to perform a certain number of actions. Now, it is indeed not significant compared to the number of rewards it gets before that, however since the number sqeezed out of the neural network satisfies the evaluation, it learns.  
 
-![cp agent trained]({{ '/assets/images/rl-and-joints/cp-trained-agent.gif'}}){: width="%" .image-center } 	
+![cp agent trained]({{ '/assets/images/training-rl-agents-in-godot/cp-trained-agent.gif'}}){: width="%" .image-center } 	
 
 ### Swing up and balance
 This part of the solution is based on the article Reinforcement learning approach to control an inverted pendulum. The article addresses the problem on both virtual and physical space, it refers to them as simulation and experiment respectively. They used both Q-learning and DQN to train the agent, with DQN coming on top as expected. They covered several aspects of the problem starting from the physical model of the system to the influence of parameters on the simulation. It talks about the timestep it took for the algorithms to learn, and the role of the parameters in it. It also has a good introduction to rl with descriptions and explanations, making it a good introductory material as well.  
@@ -118,7 +118,7 @@ In the first version we used $(\theta, \dot{\theta}, x, \dot{x})$ as the state. 
 			return true
 		return false
 ```
-![swing-up cp agent trained]({{ '/assets/images/rl-and-joints/swing-up cartpole.gif'}}){: width="%" .image-center }  
+![swing-up cp agent trained]({{ '/assets/images/training-rl-agents-in-godot/swing-up cartpole.gif'}}){: width="%" .image-center }  
 Before getting started with training I have found it better to start with attaching a manual controller script to the object that's going to be controlled by the agent, and try to have some notion of the level of difficulty the task in hand can be or if it is even possible with the physical attributes set for the environment. Because in virtual environments our assumption of how the environment should behave might not be correct because of how different platforms are set up, hence it may result in waste of training compute and time.  
 As you can imagine this took more time to train than the prior, it took a total of more than half a million timesteps for the agent to be able to swing up and balance the pole.
 
