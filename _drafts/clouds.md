@@ -21,5 +21,30 @@ Now this isn't a 3d texture yet, this is still a 2d texture which contains other
 
 ### Volume rendering
 We have seen how volumetric data is stored and covered the alogrithm we're going to use in order to display the volume data on screen. Rendering volumetric medium means we're going to deal with three lighting phenomenas, namely transmission, absorption, and shadowing. Our algorithm should simulate how much of the light that is passing through the participating medium is making it to the other side, it has to simulate how much of those light rays didn't make it out resulting in their absorption, and finally how much of those were occluded by the other parts of the volumetric medium. This implementation was taken from the book The Godot Shaders Bible, which they derived from a developer by the name DMville which he implemented on Unity for folks who prefer the engine.  
-Since the algorithm is covered in great detail in the book, instead of repeating the same information I'll explain how it works on a higher level to make it easier for you to understand when you read the book or any other material.  
-A ray is emitted from the camera stepping one STEP_SIZE at a time, sampling the density value. At each step it shoots an additional ray, this time in the direction of the light source with it's origin being the sampled_position. The additional ray is for computing how much light that part of the volume receives. If that ray passes through a dense part of the volume, the light_transmission is lower. Having a strong light_transmission affects the area of volume in shadow, resulting in lit volumetric surface. This process continues until the main ray, the ray which was emmited from the camera takes its final step. At every iteration of this process, as the ray goes through the volume, the transmittance gradually decreases by the specified light_absorbtion value.
+Since a lot is covered in the book, instead of repeating the same information I'll specifically explain how the algorithm works.  
+```{python}
+	for (int i = 0; i < NUM_STEPS; i++)
+	{
+		ray_origin += (ray_direction * STEP_SIZE);
+		vec3 sampled_position = ray_origin + offset;
+		float sample_density = texture(base_tex, sampled_position).r;
+		density += sample_density;
+
+		vec3 light_ray_origin = sampled_position;
+		light_accumulation = 0.0;
+		for (int j = 0; j < NUM_LIGHT_STEPS; j++)
+		{
+			light_ray_origin += (light_dir * LIGHT_STEP_SIZE);
+			float light_density = texture(base_tex, light_ray_origin).r;
+			light_accumulation += light_density;
+		}
+
+		float light_transmission = exp(-light_accumulation);
+		float shadow = darkness * light_transmission * (1.0 - darkness);
+		final_light += density * transmittance * shadow;
+		transmittance *= exp(-density * light_absorb);
+	}
+
+	transmission = exp(-density);
+```
+A ray is emitted from the camera stepping one STEP_SIZE at a time, sampling the density value. At each step it shoots an additional ray, this time in the direction of the light source with it's origin being the sampled_position. The additional ray is for computing how much light that part of the volume receives. If that ray passes through a dense part of the volume, the light_transmission is lower. Having a strong light_transmission affects the area of volume in shadow, resulting in lit volumetric surface. This process continues until the main ray, the ray which was emmited from the camera takes its final step. At every iteration of this process, as the ray goes through the volume, the transmittance gradually decreases by the specified light_absorbtion value. Finally the overall transmission value is computed, it is inversly proportional to the density that was accumulated.
