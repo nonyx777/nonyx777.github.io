@@ -17,7 +17,7 @@ For simplicity purposes we assume the volume container is a unit cube. And the t
 Model or import a cloud model and make its size less than a unit cube inside the modelling software of your choice. Convert that mesh into a volume. Set the camera to orthographic mode and animate the start and end clip of the camera to render parts of the volumetric at a time. Make sure the first and last frames don't include any part of the volume. Set the rendered frames' resolutions to 256x256. After rendering the animation you'll end up with 64 frames containing parts of the volumetric cloud, except the first and last. Note that the the first and last couple of frames can be blank, but the first and last are mandatory if you want a cloud which doesn't look clipped.  
 The next step is to put the frames into one single image as a spritesheet, it's also called an atlas texture. I did that using Gimp, which is a free image editing software, but again you can use any software to your liking. We want the atlas texture to be 2048x2048, the rendered images are 256x256, which results in a texture of 8x8 grid of the rendered frames. You can place the frames by hand, but instead of doing that I used a simple custom plugin that does that for me.  
 Now this isn't a 3d texture yet, this is still a 2d texture which contains other images inside it. I'll be using specific terms from the Godot engine, but the concept applies in general. To convert it into a 3d texture, you can change the Texture2D into Texture3D in the import settings. You can also do it manually by writing a script that separates out each image from the atlas texture and put it inside an array of images, we then instantiate a 3d texture object by passing the array as one of the arguments along with other data such as volume width, height, and depth. 
-![cloud texture]({{ '/assets/images/clouds/cloud_atlas_512.png'}}){: width="40%" .image-center }
+![cloud texture]({{ '/assets/images/clouds/cloud_atlas_512.png'}}){: width="100%" .image-center }
 
 ### Volume rendering
 We have seen how volumetric data is stored and covered the alogrithm we're going to use in order to display the volume data on screen. Rendering volumetric medium means we're going to deal with three lighting phenomenas, namely transmission, absorption, and shadowing. Our algorithm should simulate how much of the light that is passing through the participating medium is making it to the other side, it has to simulate how much of those light rays didn't make it out resulting in their absorption, and finally how much of those were occluded by the other parts of the volumetric medium. This implementation was taken from the book The Godot Shaders Bible, which they derived from a developer by the name DMville which he implemented on Unity for folks who prefer the engine.  
@@ -51,4 +51,55 @@ A ray is emitted from the camera stepping one STEP_SIZE at a time, sampling the 
 All except transmission affect the final color the volume will have -- transmission directly affects the alpha of the pixel, meaning the transparency of the volume.  
 This is the main meat of volumetric rendering, with this simple algorithm you can render participating mediums such as clouds.  
 For the sake of simplicity I said that the ray is emitted from the camera, although it's a valid way of doing it, in our case (rasterized graphics) it's rather inefficient and unnecessary. For that reason the emitting points would be the visible fragments of the volume container (Cube). Since the majority of the algorithm takes place inside the world-space, we must convert the fragments from view-space to world-space. And we do that by multiplying the fragment by the inverse of the VIEW matrix. That guarentees that each ray starts from the container and the algorithm doesn't waste any compute resource.  
-The last performance improvement we're going to implement is regarding ray lifetime. We ought to cut short the lives of the rays that are no longer inside the cube. That alone brings us a significant performance boost. That is done through a simple ray-box intersection algorithm. In doing so, we fix an issue -- an artifact that appears because the rays go to distances that they shouldn't, in addition because we set our 3D texture to not repeat in our shader. By constraining our rays to the container we avoid such artifacts.
+The last performance improvement we're going to implement is regarding ray lifetime. We ought to cut short the lives of the rays that are no longer inside the cube. That alone brings us a significant performance boost. That is done through a simple ray-box intersection algorithm. In doing so, we fix an issue -- an artifact that appears because the rays go to distances that they shouldn't, and also because we set our 3D texture to not repeat in our shader. By constraining our rays to the container we avoid such artifacts.  
+```{python}
+	//ray entry and exit..................................
+	float x_min = -0.5;
+	float y_min = -0.5;
+	float z_min = -0.5;
+	float x_max = 0.5;
+	float y_max = 0.5;
+	float z_max = 0.5;
+	
+	vec3 xyz_min = vec3(x_min, y_min, z_min);
+	vec3 t_xyz1 = (xyz_min - ray_origin) / ray_direction;
+	vec3 xyz_max = vec3(x_max, y_max, z_max);
+	vec3 t_xyz2 = (xyz_max - ray_origin) / ray_direction;
+	
+	vec3 t_xyz_enter = min(t_xyz1, t_xyz2);
+	vec3 t_xyz_exit = max(t_xyz1, t_xyz2);
+	
+	float t_enter = max(t_xyz_enter.x, max(t_xyz_enter.y, t_xyz_enter.z));
+	float t_exit = min(t_xyz_exit.x, min(t_xyz_exit.y, t_xyz_exit.z));
+	
+	//.......................................................
+	
+	float t_current = t_enter;
+	for (int i = 0; t_current < t_exit; i++)
+	{
+		ray_origin += (ray_direction * STEP_SIZE);
+		vec3 sampled_position = ray_origin + offset;
+		float sample_density = texture(base_tex, sampled_position).r;
+		density += sample_density;
+
+		vec3 light_ray_origin = sampled_position;
+		light_accumulation = 0.0;
+		for (int j = 0; j < NUM_LIGHT_STEPS; j++)
+		{
+			light_ray_origin += (light_dir * LIGHT_STEP_SIZE);
+			float light_density = texture(base_tex, light_ray_origin).r;
+			light_accumulation += light_density;
+		}
+
+		float light_transmission = exp(-light_accumulation);
+		float shadow = darkness * light_transmission * (1.0 - darkness);
+		final_light += density * transmittance * shadow;
+		transmittance *= exp(-density * light_absorb);
+		
+		t_current += STEP_SIZE;
+	}
+
+	transmission = exp(-density);
+```
+![cloud with artifact]({{ '/assets/images/clouds/cloud_with_artifact.png'}}){: width="100%" .image-center }
+![cloud without artifact]({{ '/assets/images/clouds/cloud_without_artifact.png'}}){: width="100%" .image-center }
