@@ -17,7 +17,7 @@ For simplicity purposes we assume the volume container is a unit cube. And the t
 Model or import a cloud model and make its size less than a unit cube inside the modelling software of your choice. Convert that mesh into a volume. Set the camera to orthographic mode and animate the start and end clip of the camera to render parts of the volumetric at a time. Make sure the first and last frames don't include any part of the volume. Set the rendered frames' resolutions to 256x256. After rendering the animation you'll end up with 64 frames containing parts of the volumetric cloud, except the first and last. Note that the the first and last couple of frames can be blank, but the first and last are mandatory if you want a cloud which doesn't look clipped.  
 The next step is to put the frames into one single image as a spritesheet, it's also called an atlas texture. I did that using Gimp, which is a free image editing software, but again you can use any software to your liking. We want the atlas texture to be 2048x2048, the rendered images are 256x256, which results in a texture of 8x8 grid of the rendered frames. You can place the frames by hand, but instead of doing that I used a simple custom plugin that does that for me.  
 Now this isn't a 3d texture yet, this is still a 2d texture which contains other images inside it. I'll be using specific terms from the Godot engine, but the concept applies in general. To convert it into a 3d texture, you can change the Texture2D into Texture3D in the import settings. You can also do it manually by writing a script that separates out each image from the atlas texture and put it inside an array of images, we then instantiate a 3d texture object by passing the array as one of the arguments along with other data such as volume width, height, and depth. 
-![cloud texture]({{ '/assets/images/clouds/cloud_atlas_512.png'}}){: width="100%" .image-center }
+![cloud texture]({{ '/assets/images/clouds/cloud_atlas_512.png'}}){: width="60%" .image-center }
 
 ### Volume rendering
 We have seen how volumetric data is stored and covered the alogrithm we're going to use in order to display the volume data on screen. Rendering volumetric medium means we're going to deal with three lighting phenomenas, namely transmission, absorption, and shadowing. Our algorithm should simulate how much of the light that is passing through the participating medium is making it to the other side, it has to simulate how much of those light rays didn't make it out resulting in their absorption, and finally how much of those were occluded by the other parts of the volumetric medium. This implementation was taken from the book The Godot Shaders Bible, which they derived from a developer by the name DMville which he implemented on Unity for folks who prefer the engine.  
@@ -101,5 +101,15 @@ The last performance improvement we're going to implement is regarding ray lifet
 
 	transmission = exp(-density);
 ```
-![cloud with artifact]({{ '/assets/images/clouds/cloud_with_artifact.png'}}){: width="100%" .image-center }
-![cloud without artifact]({{ '/assets/images/clouds/cloud_without_artifact.png'}}){: width="100%" .image-center }
+![cloud with artifact]({{ '/assets/images/clouds/cloud_with_artifact.png'}}){: width="60%" .image-center }
+![cloud without artifact]({{ '/assets/images/clouds/cloud_without_artifact.png'}}){: width="60%" .image-center }
+/
+### Interactable volumes
+1. Density values are multiplied with a mask buffer with the same size as the 3d texture.
+2. The buffer should always exist at the gpu, never to be synced with the cpu.
+3. Mask buffer keeps getting updated via a compute shader.
+Since in godot it's not possible to access a buffer from vertex/fragment shader which was modified by a compute shader, we must find another way. We use a texture which is bound to the global render server, that way we can directly access data from the compute shader without the cpus involvement.
+Our volume's 3d texture is 512x512x512, so will be our mask texture. Coordinates located at a distance less than the specified radius are set to 0. Perhaps we might implement a fading feature where it blends between 0 and 1.
+The mask will later get multiplied to the density values. Nothing else changes inside the fragment shader, just that multiplication.
+
+### Proper shading of missing parts
